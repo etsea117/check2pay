@@ -1,0 +1,106 @@
+{% extends "layout.html.tera" %} {% block content %}
+<div class="row">
+  <h4>Edit Transaction</h4>
+  <div class="twelve columns">
+    <div class="ten columns">
+      <form action="/{{ transaction.id }}" method="post">
+        <div class="twelve columns">
+          <div class="three columns">
+            <label for="amount">Transaction Amount:</label>
+            <input
+              type="number"
+              name="amount"
+              id="amount"
+              step="0.01"
+              value="{{ transaction.amount }}"
+              autofocus
+            />
+          </div>
+          <div class="two columns">
+            <input
+              type="hidden"
+              name="user_id"
+              value="{{ transaction.user_id }}"
+            />
+            <label for="date">Transaction Date:</label>
+            <input
+              type="date"
+              name="date"
+              id="date"
+              value="{{ transaction.date }}"
+              autofocus
+            />
+          </div>
+          {% if transaction.expense == true %}
+          <div class="one column">
+            <label for="expense_type">Expense</label>
+          </div>
+          <div class="one column">
+            <input
+              type="radio"
+              id="expense_type"
+              name="expense"
+              value="true"
+              checked
+            />
+          </div>
+          <div class="one column">
+            <label for="income_type">Income</label>
+          </div>
+          <div class="one column">
+            <input type="radio" id="income_type" name="expense" value="false" />
+          </div>
+          {% else %}
+          <div class="one column">
+            <label for="expense_type">Expense</label>
+          </div>
+          <div class="one column">
+            <input type="radio" id="expense_type" name="expense" value="true" />
+          </div>
+          <div class="one column">
+            <label for="income_type">Income</label>
+          </div>
+          <div class="one column">
+            <input
+              type="radio"
+              id="income_type"
+              name="expense"
+              value="false"
+              checked
+            />
+          </div>
+          {% endif %}
+          <div class="three columns">
+            <label for="note">Notes:</label>
+            <input
+              type="text"
+              name="note"
+              id="note"
+              value="{{ transaction.note }}"
+              autofocus
+            />
+          </div>
+        </div>
+        <div class="twelve columns">
+          <div class="two columns">
+            <a href="/">
+              <input type="button" value="cancel" />
+            </a>
+          </div>
+          <div class="eight columns"></div>
+          <div class="two columns">
+            <input type="submit" value="save transaction" />
+          </div>
+        </div>
+      </form>
+    </div>
+    <div class="two columns">
+      <form action="/delete/{{ transaction.id }}" method="post">
+        <div class="two columns">
+          <input id="delete-button" type="submit" value="delete transaction" />
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock content %}

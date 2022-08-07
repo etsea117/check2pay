@@ -1,0 +1,68 @@
+{% extends "layout.html.tera" %} {% block content %}
+<div class="container">
+  <p><!--Nothing to see here--></p>
+  <h1>Check 2 Pay</h1>
+  {% if flash %}
+  <small class="field-{{ flash.kind }}-flash">
+    {{ flash.message }}
+  </small>
+  {% endif %}
+  <table>
+    <tbody>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Date</th>
+          <th>Amount</th>
+          <th>Type</th>
+          <th>Note</th>
+        </tr>
+      </thead>
+      {% for transaction in transacts %}
+      <tr
+        class="transaction"
+        onclick="window.location='/{{ transaction.id }}';"
+      >
+        <td>{{ transaction.id }}</td>
+        <td>{{ transaction.date }}</td>
+        <td>{{ transaction.amount }}</td>
+        <td>
+          {% if transaction.expense == true %}Expense {% else %}Income{% endif
+          %}
+        </td>
+        <td>{{ transaction.note }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <td></td>
+        <td>
+          {% if page == 1 %} Previous {% else %}
+          <a
+            href="/?page={{ page - 1 }}&transactions_per_page={{
+              transactions_per_page
+            }}"
+            >Previous</a
+          >
+          {% endif %} | {% if page == num_pages %} Next {% else %}
+          <a
+            href="/?page={{ page + 1 }}&transactions_per_page={{
+              transactions_per_page
+            }}"
+            >Next</a
+          >
+          {% endif %}
+        </td>
+        <td></td>
+      </tr>
+    </tfoot>
+  </table>
+  <div class="twelve columns">
+    <a href="/new">
+      <input type="button" value="add transaction" />
+    </a>
+  </div>
+</div>
+
+{% endblock content %}

@@ -7,13 +7,15 @@ use axum::{
     routing::{get, get_service, post},
     Router, Server,
 };
+use chrono::{DateTime, Duration, NaiveDate, Utc};
 use entity::{tags, transaction_tags, transactions, users};
 use flash::{get_flash_cookie, post_response, PostResponse};
-use migration::{Migrator, MigratorTrait};
-use sea_orm::{prelude::*, Database, QueryOrder, Set};
+use migration::{Condition, Migrator, MigratorTrait};
+use sea_orm::{prelude::*, Database, FromQueryResult, QueryOrder, QuerySelect, Set};
+use sea_query::Expr;
 use serde::{Deserialize, Serialize};
-use std::str::FromStr;
 use std::{env, net::SocketAddr};
+use std::{iter::Sum, str::FromStr};
 use tags::Entity as Tags;
 use tera::Tera;
 use tower::ServiceBuilder;
@@ -22,6 +24,8 @@ use tower_http::services::ServeDir;
 use transaction_tags::Entity as TransactionTags;
 use transactions::Entity as Transactions;
 use users::Entity as Users;
+
+pub const USER_ID_FOR_TEST: i32 = 1;
 
 #[tokio::main]
 async fn main() -> anyhow::Result<()> {
@@ -43,10 +47,11 @@ async fn main() -> anyhow::Result<()> {
     // let state = AppState { templates, conn };
 
     let app = Router::new()
-        .route("/", get(list_transactions).post(create_transaction))
+        .route("/", get(total_transactions).post(create_transaction))
         .route("/:id", get(edit_transaction).post(update_transaction))
         .route("/new", get(new_transaction))
         .route("/delete/:id", post(delete_transaction))
+        .route("/list", get(list_transactions))
         .nest(
             "/static",
             get_service(ServeDir::new(concat!(
@@ -94,7 +99,7 @@ async fn list_transactions(
     let page = params.page.unwrap_or(1);
     let transactions_per_page = params.transactions_per_page.unwrap_or(5);
     let paginator = Transactions::find()
-        .order_by_asc(transactions::Column::Id)
+        .order_by_asc(transactions::Column::Date)
         .paginate(conn, transactions_per_page);
     let num_pages = paginator.num_pages().await.ok().unwrap();
     let transacts = paginator
@@ -113,7 +118,7 @@ async fn list_transactions(
     }
 
     let body = templates
-        .render("transaction_list.html.tera", &ctx)
+        .render("index.html.tera", &ctx)
         .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Template error"))?;
 
     Ok(Html(body))
@@ -196,11 +201,11 @@ async fn update_transaction(
     }
     .save(conn)
     .await
-    .expect("could not edit post");
+    .expect("could not edit transaction");
 
     let data = FlashData {
         kind: "success".to_owned(),
-        message: "Post successfully updated".to_owned(),
+        message: "Transaction successfully updated".to_owned(),
     };
 
     Ok(post_response(&mut cookies, data))
@@ -223,6 +228,101 @@ async fn delete_transaction(
     let data = FlashData {
         kind: "success".to_owned(),
         message: "Transaction successfully deleted".to_owned(),
+    };
+
+    Ok(post_response(&mut cookies, data))
+}
+
+#[derive(Deserialize)]
+struct UserParams {
+    user_id: i32,
+    todays_date: Date,
+    tomorrow: Date,
+}
+
+#[derive(Deserialize, FromQueryResult)]
+struct SumResult {
+    amount: Decimal,
+}
+
+async fn total_transactions(
+    Extension(ref templates): Extension<Tera>,
+    Extension(ref conn): Extension<DatabaseConnection>,
+    Extension(ref conn2): Extension<DatabaseConnection>,
+) -> Result<Html<String>, (StatusCode, &'static str)> {
+    let user_1 = UserParams {
+        user_id: 1,
+        todays_date: Utc::now().naive_local().date(),
+        tomorrow: Utc::now().naive_local().date() + Duration::days(1),
+    };
+    let expense_transaction: SumResult = Transactions::find()
+        .filter(
+            Condition::all()
+                .add(transactions::Column::Date.lt(user_1.tomorrow))
+                .add(transactions::Column::Expense.eq(true)),
+        )
+        .select_only()
+        .column_as(Expr::col(transactions::Column::Amount).sum(), "amount")
+        .into_model::<SumResult>()
+        .one(conn)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let expense_sum = expense_transaction.amount;
+
+    let income_transaction: SumResult = Transactions::find()
+        .filter(
+            Condition::all()
+                .add(transactions::Column::Date.lt(user_1.tomorrow))
+                .add(transactions::Column::Expense.eq(false)),
+        )
+        .select_only()
+        .column_as(Expr::col(transactions::Column::Amount).sum(), "amount")
+        .into_model::<SumResult>()
+        .one(conn)
+        .await
+        .unwrap()
+        .unwrap();
+
+    let income_sum = income_transaction.amount;
+
+    let total = income_sum - expense_sum;
+
+    let mut ctx = tera::Context::new();
+    ctx.insert("user_id", &user_1.user_id);
+    ctx.insert("today", &user_1.todays_date);
+    ctx.insert("sum", &total);
+
+    let body = templates
+        .render("total.html.tera", &ctx)
+        .map_err(|_| (StatusCode::INTERNAL_SERVER_ERROR, "Template error"))?;
+
+    Ok(Html(body))
+}
+
+async fn sum_transactions(
+    Extension(ref conn): Extension<DatabaseConnection>,
+    form: Form<transactions::Model>,
+    mut cookies: Cookies,
+) -> Result<PostResponse, (StatusCode, &'static str)> {
+    let model = form.0;
+
+    transactions::ActiveModel {
+        date: Set(model.date.to_owned()),
+        amount: Set(model.amount.to_owned()),
+        expense: Set(model.expense.to_owned()),
+        note: Set(model.note.to_owned()),
+        user_id: Set(model.user_id.to_owned()),
+        ..Default::default()
+    }
+    .save(conn)
+    .await
+    .expect("could not insert transaction");
+
+    let data = FlashData {
+        kind: "success".to_owned(),
+        message: "Transaction successfully added".to_owned(),
     };
 
     Ok(post_response(&mut cookies, data))

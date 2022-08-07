@@ -80,7 +80,7 @@ input {
     font-size: 0.8rem;
 }
 
-.add_task_form {
+.add_transaction_form {
     display: flex;
     justify-content: space-between;
 }
@@ -114,3 +114,4 @@ label {
 .page-selector {
     padding: 1rem 1rem;
 }
+

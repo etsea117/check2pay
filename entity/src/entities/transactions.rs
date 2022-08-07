@@ -7,9 +7,11 @@ use serde::{Deserialize, Serialize};
 #[sea_orm(table_name = "transactions")]
 pub struct Model {
     #[sea_orm(primary_key)]
+    #[serde(skip_deserializing)]
     pub id: i32,
     pub date: Date,
-    pub amount: f64,
+    #[sea_orm(column_type = "Decimal(Some((14, 4)))")]
+    pub amount: Decimal,
     pub expense: bool,
     pub note: Option<String>,
     pub user_id: i32,

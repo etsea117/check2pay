@@ -21,7 +21,11 @@ impl MigrationTrait for Migration {
                             .primary_key(),
                     )
                     .col(ColumnDef::new(Transactions::Date).date().not_null())
-                    .col(ColumnDef::new(Transactions::Amount).double().not_null())
+                    .col(
+                        ColumnDef::new(Transactions::Amount)
+                            .decimal_len(14, 4)
+                            .not_null(),
+                    )
                     .col(ColumnDef::new(Transactions::Expense).boolean().not_null())
                     .col(ColumnDef::new(Transactions::Note).string().null())
                     .col(ColumnDef::new(Transactions::UserId).integer().not_null())
