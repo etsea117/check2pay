@@ -1,17 +1,100 @@
 {% extends "layout.html.tera" %} {% block content %}
-<div class="container">
-  <p><!--Nothing to see here--></p>
-  <h1>Check 2 Pay</h1>
-  {% if flash %}
-  <small class="field-{{ flash.kind }}-flash">
-    {{ flash.message }}
-  </small>
-  {% endif %}
-  <table>
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a
+      role="button"
+      class="navbar-burger is-hoverable"
+      aria-label="menu"
+      aria-expanded="false"
+      data-target="check2PayNav"
+    >
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+
+  <div id="check2PayNav" class="navbar-menu">
+    <div class="navbar-start">
+      <a class="navbar-item" href="/"> Home </a>
+      <a class="navbar-item" href="/list"> Transactions </a>
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link"> More </a>
+        <div class="navbar-dropdown">
+          <a class="navbar-item" href="/new"> New </a>
+          <hr class="navbar-divider" />
+          <a class="navbar-item"> About </a>
+          <a class="navbar-item"> Contact </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="navbar-end">
+      <div class="navbar-item">
+        <div class="buttons">
+          <a class="button is-primary" href="/signup">
+            <strong>Sign up</strong>
+          </a>
+          <a class="button is-light" href="/login"> Log in </a>
+        </div>
+      </div>
+    </div>
+  </div>
+</nav>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Get all "navbar-burger" elements
+    const $navbarBurgers = Array.prototype.slice.call(
+      document.querySelectorAll('.navbar-burger'),
+      0
+    );
+
+    // Add a click event on each of them
+    $navbarBurgers.forEach((el) => {
+      el.addEventListener('click', () => {
+        // Get the target from the "data-target" attribute
+        const target = el.dataset.target;
+        const $target = document.getElementById(target);
+
+        // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+        el.classList.toggle('is-active');
+        $target.classList.toggle('is-active');
+      });
+    });
+  });
+</script>
+<section class="hero is-link">
+  <div class="hero-body">
+    <p class="subtitle">
+      You have: <strong>{{ sum }}</strong> left to spend until you get paid on:
+      <strong>{{ next_income_date }}</strong>
+    </p>
+  </div>
+</section>
+{% if flash %}
+<div class="notification is-{{ flash.kind }}">
+  <button class="delete"></button>
+  {{ flash.message }}
+</div>
+{% endif %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    (document.querySelectorAll('.notification .delete') || []).forEach(
+      ($delete) => {
+        const $notification = $delete.parentNode;
+
+        $delete.addEventListener('click', () => {
+          $notification.parentNode.removeChild($notification);
+        });
+      }
+    );
+  });
+</script>
+<div class="box">
+  <table class="table is-hoverable is-striped is-fullwidth">
     <tbody>
       <thead>
         <tr>
-          <th>ID</th>
           <th>Date</th>
           <th>Amount</th>
           <th>Type</th>
@@ -23,7 +106,6 @@
         class="transaction"
         onclick="window.location='/{{ transaction.id }}';"
       >
-        <td>{{ transaction.id }}</td>
         <td>{{ transaction.date }}</td>
         <td>{{ transaction.amount }}</td>
         <td>
@@ -40,14 +122,14 @@
         <td>
           {% if page == 1 %} Previous {% else %}
           <a
-            href="/?page={{ page - 1 }}&transactions_per_page={{
+            href="/list/?page={{ page - 1 }}&transactions_per_page={{
               transactions_per_page
             }}"
             >Previous</a
           >
           {% endif %} | {% if page == num_pages %} Next {% else %}
           <a
-            href="/?page={{ page + 1 }}&transactions_per_page={{
+            href="/list/?page={{ page + 1 }}&transactions_per_page={{
               transactions_per_page
             }}"
             >Next</a
@@ -58,10 +140,10 @@
       </tr>
     </tfoot>
   </table>
-  <div class="twelve columns">
-    <a href="/new">
-      <input type="button" value="add transaction" />
-    </a>
+  <div class="columns is-centered">
+    <div class="colum is-half">
+      <a class="button is-link" href="/new"> Add transaction </a>
+    </div>
   </div>
 </div>
 

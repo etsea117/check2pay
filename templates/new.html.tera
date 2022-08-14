@@ -1,58 +1,194 @@
 {% extends "layout.html.tera" %} {% block content %}
-<div class="row">
-  <h4>New Transaction</h4>
-  <form action="/" method="post">
-    <div class="twelve columns">
-      <div class="three columns">
-        <label for="amount">Transaction Amount:</label>
-        <input
-          type="number"
-          name="amount"
-          id="amount"
-          placeholder="12.34"
-          step="0.01"
-          autofocus
-        />
-      </div>
-      <div class="two columns">
-        <input type="hidden" name="user_id" value="1" />
-        <label for="date">Transaction Date:</label>
-        <input type="date" name="date" id="date" autofocus />
-      </div>
-      <div class="one column">
-        <label for="expense_type">Expense</label>
-      </div>
-      <div class="one column">
-        <input
-          type="radio"
-          id="expense_type"
-          name="expense"
-          value="true"
-          checked
-        />
-      </div>
-      <div class="one column">
-        <label for="income_type">Income</label>
-      </div>
-      <div class="one column">
-        <input type="radio" id="income_type" name="expense" value="false" />
-      </div>
-      <div class="three columns">
-        <label for="note">Notes:</label>
-        <input type="text" name="note" id="note" autofocus />
+<nav class="navbar" role="navigation" aria-label="main navigation">
+  <div class="navbar-brand">
+    <a
+      role="button"
+      class="navbar-burger"
+      aria-label="menu"
+      aria-expanded="false"
+      data-target="check2PayNav"
+    >
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+      <span aria-hidden="true"></span>
+    </a>
+  </div>
+
+  <div id="check2PayNav" class="navbar-menu">
+    <div class="navbar-start">
+      <a class="navbar-item" href="/"> Home </a>
+      <a class="navbar-item" href="/list"> Transactions </a>
+      <div class="navbar-item has-dropdown is-hoverable">
+        <a class="navbar-link"> More </a>
+        <div class="navbar-dropdown">
+          <a class="navbar-item" href="/new"> New </a>
+          <hr class="navbar-divider" />
+          <a class="navbar-item"> About </a>
+          <a class="navbar-item"> Contact </a>
+        </div>
       </div>
     </div>
-    <div class="twelve columns">
-      <div class="two columns">
-        <a href="/">
-          <input type="button" value="cancel" />
-        </a>
-      </div>
-      <div class="eight columns"></div>
-      <div class="two columns">
-        <input type="submit" value="save transaction" />
+
+    <div class="navbar-end">
+      <div class="navbar-item">
+        <div class="buttons">
+          <a class="button is-primary" href="/signup">
+            <strong>Sign up</strong>
+          </a>
+          <a class="button is-light" href="/login"> Log in </a>
+        </div>
       </div>
     </div>
-  </form>
+  </div>
+</nav>
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    // Get all "navbar-burger" elements
+    const $navbarBurgers = Array.prototype.slice.call(
+      document.querySelectorAll('.navbar-burger'),
+      0
+    );
+
+    // Add a click event on each of them
+    $navbarBurgers.forEach((el) => {
+      el.addEventListener('click', () => {
+        // Get the target from the "data-target" attribute
+        const target = el.dataset.target;
+        const $target = document.getElementById(target);
+
+        // Toggle the "is-active" class on both the "navbar-burger" and the "navbar-menu"
+        el.classList.toggle('is-active');
+        $target.classList.toggle('is-active');
+      });
+    });
+  });
+</script>
+<section class="hero is-warning">
+  <div class="hero-body">
+    <p class="subtitle">
+      You have: <strong>{{ sum }}</strong> left to spend until you get paid on:
+      <strong>{{ next_income_date }}</strong>
+    </p>
+  </div>
+</section>
+{% if flash %}
+<div class="notification is-{{ flash.kind }}">
+  <button class="delete"></button>
+  {{ flash.message }}
 </div>
+{% endif %}
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    (document.querySelectorAll('.notification .delete') || []).forEach(
+      ($delete) => {
+        const $notification = $delete.parentNode;
+
+        $delete.addEventListener('click', () => {
+          $notification.parentNode.removeChild($notification);
+        });
+      }
+    );
+  });
+</script>
+<section class="is-light">
+  <div class="box p-5">
+    <div class="container is-mobile">
+      <form action="/" method="post">
+        <div class="field is-horizontal">
+          <div class="field-label">
+            <label class="label">Transaction Amount</label>
+          </div>
+          <div class="field-body">
+            <div class="field is-narrow">
+              <div class="control">
+                <input
+                  class="input"
+                  type="number"
+                  name="amount"
+                  placeholder="12.34"
+                  step="0.01"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <input type="hidden" name="user_id" value="1" />
+        <div class="field is-horizontal">
+          <div class="field-label">
+            <label class="label">Transaction Date</label>
+          </div>
+          <div class="field-body">
+            <div class="field is-narrow">
+              <div class="control">
+                <input class="input" type="date" name="date" />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field is-horizontal">
+          <div class="field-label">
+            <label class="label">Transaction Type</label>
+          </div>
+          <div class="field-body">
+            <div class="field is-narrow">
+              <div class="control">
+                <label class="radio">
+                  <input type="radio" name="expense" value="true" checked />
+                  Expense
+                </label>
+                <label class="radio">
+                  <input type="radio" name="expense" value="false" />
+                  Income
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field is-horizontal">
+          <div class="field-label">
+            <label class="label">Transaction Notes</label>
+          </div>
+          <div class="field-body">
+            <div class="field is-narrow">
+              <div class="control">
+                <input
+                  class="input"
+                  type="text"
+                  name="note"
+                  placeholder="e.g. Rent"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field is-horizontal">
+          <div class="field-label">
+            <!-- Left empty for spacing -->
+          </div>
+          <div class="field-body">
+            <div class="field">
+              <div class="control">
+                <button class="button is-primary" type="submit">
+                  Save transaction
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="field is-horizontal">
+          <div class="field-label">
+            <!-- Left empty for spacing -->
+          </div>
+          <div class="field-body">
+            <div class="field">
+              <div class="control">
+                <a class="button" href="/"> Cancel </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
 {% endblock content %}

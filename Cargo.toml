@@ -25,6 +25,8 @@ migration = { path = "migration" }
 chrono = "0.4"
 sea-query = "^0"
 
+rust-argon2 = "1.0"
+
 [dependencies.sea-orm]
 version = "^0.9.1"
 features = [

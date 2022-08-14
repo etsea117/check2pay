@@ -76,3 +76,15 @@ button.small {
 .fieldset-expense {
   border: 2px groove;
 }
+
+.container.home-header {
+  margin: auto;
+}
+
+.container.home-footer {
+  margin: auto;
+}
+
+.center {
+  margin: auto;
+}
