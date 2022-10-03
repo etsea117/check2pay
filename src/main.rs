@@ -401,10 +401,28 @@ async fn total_transactions(
         todays_date: Local::now().naive_local().date(),
         next_income_date: Local::now().naive_local().date() + Duration::days(1),
     };
+    let next_income: transactions::ActiveModel = Transactions::find()
+        .filter(
+            Condition::all()
+                .add(transactions::Column::Date.gt(user_1.todays_date))
+                .add(transactions::Column::Expense.eq(false)),
+        )
+        .order_by_asc(transactions::Column::Date)
+        .one(conn)
+        .await
+        .unwrap()
+        .unwrap()
+        .into();
+
+    let user_1_update = UserParams {
+        user_id: 1,
+        todays_date: Local::now().naive_local().date(),
+        next_income_date: next_income.date.unwrap(),
+    };
     let expense_transaction: SumResult = Transactions::find()
         .filter(
             Condition::all()
-                .add(transactions::Column::Date.lt(user_1.next_income_date))
+                .add(transactions::Column::Date.lt(user_1_update.next_income_date))
                 .add(transactions::Column::Expense.eq(true)),
         )
         .select_only()
@@ -420,7 +438,7 @@ async fn total_transactions(
     let income_transaction: SumResult = Transactions::find()
         .filter(
             Condition::all()
-                .add(transactions::Column::Date.lt(user_1.next_income_date))
+                .add(transactions::Column::Date.lt(user_1_update.next_income_date))
                 .add(transactions::Column::Expense.eq(false)),
         )
         .select_only()
@@ -440,7 +458,7 @@ async fn total_transactions(
     let mut ctx = tera::Context::new();
     ctx.insert("user_id", &user_1.user_id);
     ctx.insert("today", &user_1.todays_date);
-    ctx.insert("next_income_date", &user_1.next_income_date);
+    ctx.insert("next_income_date", &user_1_update.next_income_date);
     ctx.insert("sum", &total_fmt);
 
     let body = templates
